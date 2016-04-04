@@ -17,108 +17,141 @@ The key data structure of the algorithm is the combination of Hash Map and Doubl
 
 #include <iostream>
 #include <vector>
+#include <list>
 #include <unordered_map>
 
 using namespace std;
 
-class LRUCache{
-public:
-    struct LRUCacheEntry
-    {
-        int key;
-        int data;
-        LRUCacheEntry* prev;
-        LRUCacheEntry* next;
-    };
-    
-    unordered_map<int, LRUCacheEntry*>	_mapping;
-    vector<LRUCacheEntry*>		_freeEntries;
-    LRUCacheEntry*			head;
-    LRUCacheEntry*			tail;
-    LRUCacheEntry*			entries;
-    
-    LRUCache(int capacity) {
-        entries = new LRUCacheEntry[capacity];
-        for (int i=0; i<capacity; i++)
-            _freeEntries.push_back(entries+i);
-        head = new LRUCacheEntry();
-        tail = new LRUCacheEntry();
-        head->prev = NULL;
-        head->next = tail;
-        tail->next = NULL;
-        tail->prev = head;
-    }
-    
-    ~LRUCache()
-    {
-        delete head;
-        delete tail;
-        delete [] entries;
-    }
-    
-    int get(int key) {
-        LRUCacheEntry* node = _mapping[key];
-        // If the key exists
-        if(node)
-        {
-            detach(node);
-            attach(node);
-            return node->data;
-        }
-        else return -1;
-    }
-    
-    void set(int key, int value) {
-        LRUCacheEntry* node = _mapping[key];
-        if(node)
-        {
-            // refresh the link list
-            detach(node);
-            node->data = value;
-            attach(node);
-        }
-        else{
-            if ( _freeEntries.empty() )
-            {
-                // Get the last node
-                node = tail->prev;
-                // Remove the key from the hash map
-                _mapping.erase(node->key);
-                // Update the node
-                node->data = value;
-                node->key = key;
-                // Move the node to the head
-                detach(node);
-                attach(node);
-                // Update the hash map
-                _mapping[key] = node;
-            }
-            else{
-                // Get the free entry
-                node = _freeEntries.back();
-                _freeEntries.pop_back();
-                // Fill the node with key and value
-                node->key = key;
-                node->data = value;
-                // Move the node to the head
-                attach(node);
-                // Update the hash map
-                _mapping[key] = node;
-            }
-        }
-    }
-    
-private:
-    void detach(LRUCacheEntry* node)
-    {
-        node->prev->next = node->next;
-        node->next->prev = node->prev;
-    }
-    void attach(LRUCacheEntry* node)
-    {
-        node->next = head->next;
-        node->prev = head;
-        head->next = node;
-        node->next->prev = node;
+struct Node {
+    int key;
+    int val;
+
+    Node* next;
+    Node* prev;
+
+    Node(int key, int val) {
+        this->key = key;
+        this->val = val;
+        next = prev = NULL;
     }
 };
+
+class LRU {
+    private:
+        int capacity;
+        int size;
+        unordered_map<int, Node*> _map;
+        Node* head;
+        Node* tail;
+
+        void evict() {
+            while(size > capacity) {
+                if(!tail) {
+                    break;
+                }
+                Node* prev = tail->prev;
+                if(tail->prev)
+                    tail->prev->next = NULL;
+                auto it = _map.find(tail->key);
+                _map.erase(it);
+                delete tail;
+                tail = prev;
+                size--;
+            }
+        }
+
+        void moveToFront(Node* node) {
+            if (node == head || head == tail)
+                return;
+            if (node == tail) {
+                tail = node->prev;
+            }
+
+            Node* prev = node->prev;
+            if(prev) {
+                prev->next = node->next;
+            }
+            if(node->next) {
+                node->next->prev = prev;
+            }
+            node->prev = NULL;
+            head->prev = node;
+            node->next = head;
+            head = node;
+            tail->next = NULL;
+        }
+
+    public:
+        LRU(int cap) {
+            size = 0;
+            capacity = cap;
+            head = NULL;
+            tail = NULL;
+        }
+
+        int get(int k) {
+            Node* node = _map[k];
+            if(node) {
+                moveToFront(node);
+                return node->val;
+            } else {
+                return -1;
+            }
+        }
+
+        void set(int k, int v) {
+                Node* n = _map[k];
+                if(n) {
+                    n->val = v;
+                } else {
+                    Node *n = new Node(k, v);
+                    _map[k] = n;
+                    if(head) {
+                        head->prev = n;
+                        n->next = head;
+                        head = n;
+                    } else {
+                        head = n;
+                        tail = n;
+                    }
+                    size++;
+                    if(capacity >0 && size > capacity)
+                        evict();
+                }
+        }
+};
+
+int main() {
+    LRU lru(5);
+
+    for(int i = 1; i < 10; i++) {
+        lru.set(i,i);
+    }
+
+    for(int i = 0 ; i < 10; i++) {
+        cout << "Testing " << i << " got: " << lru.get(i) << endl;
+    }
+
+    lru.set(1,1);
+    lru.set(2,2);
+
+
+    cout << endl << endl;
+
+    for(int i = 0 ; i < 10; i++) {
+        cout << "Testing " << i << " got: " << lru.get(i) << endl;
+    }
+
+    lru.get(7);
+    lru.get(1);
+    lru.get(2);
+    lru.set(3,3);
+
+    cout << endl << endl;
+
+    for(int i = 0 ; i < 10; i++) {
+        cout << "Testing " << i << " got: " << lru.get(i) << endl;
+    }
+
+    return 0;
+}
