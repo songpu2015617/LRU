@@ -8,11 +8,16 @@
 /*************************************************************************************************************
 What is LRU?
 
-Least Recently Used (LRU) is a family of caching algorithms, which discards the least recently used items first. This algorithm requires keeping track of when the item was used, which is expensive if one wants to make sure the algorithm always discards the least recently used item. General implementations of this technique require keeping "age bits" for cache-lines and track the "Least Recently Used" cache-line based on age-bits.
+Least Recently Used (LRU) is a family of caching algorithms, which discards the least recently used items first. 
+This algorithm requires keeping track of when the item was used, which is expensive if one wants to 
+make sure the algorithm always discards the least recently used item. General implementations of this technique 
+require keeping "age bits" for cache-lines and track the "Least Recently Used" cache-line based on age-bits.
 
 Data Structure
 
-The key data structure of the algorithm is the combination of Hash Map and Doubly-Linked List. We initialize a Hash Map in a pre-defined size to store pairs, and use Doubly-Linked List to index the pairs in the order of data age.
+The key data structure of the algorithm is the combination of Hash Map and Doubly-Linked List. 
+We initialize a Hash Map in a pre-defined size to store pairs, and use Doubly-Linked List to index the pairs
+in the order of data age.
 ***********************************************************************************************************/
 
 #include <iostream>
@@ -21,7 +26,7 @@ The key data structure of the algorithm is the combination of Hash Map and Doubl
 #include <unordered_map>
 
 using namespace std;
-
+// double-linked list node
 struct Node {
     int key;
     int val;
@@ -40,10 +45,10 @@ class LRU {
     private:
         int capacity;
         int size;
-        unordered_map<int, Node*> _map;
+        unordered_map<int, Node*> _map; // use hashtable to store the information between key and node address for quick query
         Node* head;
         Node* tail;
-
+// delete extra node from the tail
         void evict() {
             while(size > capacity) {
                 if(!tail) {
@@ -59,7 +64,7 @@ class LRU {
                 size--;
             }
         }
-
+//move recent used node to front
         void moveToFront(Node* node) {
             if (node == head || head == tail)
                 return;
@@ -89,9 +94,8 @@ class LRU {
             tail = NULL;
         }
 
-        int get(int k) {
-            Node* node = _map[k];
-            if(node) {
+        int get(int key) {
+            if(_map.count(key)!=0) {
                 moveToFront(node);
                 return node->val;
             } else {
@@ -99,20 +103,19 @@ class LRU {
             }
         }
 
-        void set(int k, int v) {
-                Node* n = _map[k];
-                if(n) {
-                    n->val = v;
+        void set(int key, int value) {
+                if(get(key) != -1) {
+                    _map[key]->val = value;
                 } else {
-                    Node *n = new Node(k, v);
-                    _map[k] = n;
+                    Node *nd = new Node(key, value);
+                    _map[k] = nd;
                     if(head) {
-                        head->prev = n;
-                        n->next = head;
-                        head = n;
+                        head->prev = nd;
+                        nd->next = head;
+                        head = nd;
                     } else {
-                        head = n;
-                        tail = n;
+                        head = nd;
+                        tail = nd;
                     }
                     size++;
                     if(capacity >0 && size > capacity)
