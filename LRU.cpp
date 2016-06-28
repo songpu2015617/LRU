@@ -45,7 +45,7 @@ class LRU {
     private:
         int capacity;
         int size;
-        unordered_map<int, Node*> _map; // use hashtable to store the information between key and node address for quick query
+        unordered_map<int, Node*> map; // use hashtable to store the information between key and node address for quick query
         Node* head;
         Node* tail;
 // delete extra node from the tail
@@ -105,10 +105,10 @@ class LRU {
 
         void set(int key, int value) {
                 if(get(key) != -1) {
-                    _map[key]->val = value;
+                    map[key]->val = value;
                 } else {
                     Node *nd = new Node(key, value);
-                    _map[k] = nd;
+                    map[k] = nd;
                     if(head) {
                         head->prev = nd;
                         nd->next = head;
