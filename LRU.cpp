@@ -95,7 +95,7 @@ class LRU {
         }
 
         int get(int key) {
-            if(_map.count(key)!=0) {
+            if(map.count(key)!=0) {
                 moveToFront(node);
                 return node->val;
             } else {
