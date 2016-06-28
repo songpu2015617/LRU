@@ -57,8 +57,8 @@ class LRU {
                 Node* prev = tail->prev;
                 if(tail->prev)
                     tail->prev->next = NULL;
-                auto it = _map.find(tail->key);
-                _map.erase(it);
+                auto it = map.find(tail->key);
+                map.erase(it);
                 delete tail;
                 tail = prev;
                 size--;
